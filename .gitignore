@@ -1,0 +1,33 @@
+# --- Python / backend ---
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Environment variables ---
+.env
+.env.*
+backend/.env
+frontend/.env
+
+
+# --- Node / frontend (Vite) ---
+node_modules/
+frontend/dist/
+npm-debug.log*
+yarn-error.log*
+
+# --- Editor / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Docker ---
+pgdata/
