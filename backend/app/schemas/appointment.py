@@ -1,8 +1,7 @@
 import uuid
 from datetime import datetime
-from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.models.appointment import AppointmentStatus
 
@@ -13,7 +12,7 @@ class AppointmentBase(BaseModel):
     room_id: uuid.UUID
     start_time: datetime
     end_time: datetime
-    notes: Optional[str] = None
+    notes: str | None = None
 
     @model_validator(mode="after")
     def check_time_order(self):
@@ -28,13 +27,14 @@ class AppointmentCreate(AppointmentBase):
 
 class AppointmentUpdate(BaseModel):
     """Used for rescheduling: change time/room/therapist, or update status."""
-    patient_id: Optional[uuid.UUID] = None
-    therapist_id: Optional[uuid.UUID] = None
-    room_id: Optional[uuid.UUID] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    status: Optional[AppointmentStatus] = None
-    notes: Optional[str] = None
+
+    patient_id: uuid.UUID | None = None
+    therapist_id: uuid.UUID | None = None
+    room_id: uuid.UUID | None = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    status: AppointmentStatus | None = None
+    notes: str | None = None
 
 
 class NameOut(BaseModel):
@@ -59,7 +59,7 @@ class AppointmentOut(BaseModel):
     start_time: datetime
     end_time: datetime
     status: AppointmentStatus
-    notes: Optional[str] = None
+    notes: str | None = None
     created_at: datetime
 
     patient: NameOut
@@ -69,6 +69,7 @@ class AppointmentOut(BaseModel):
 
 class AvailableSlotOut(BaseModel):
     """A free slot returned by the 'find available slots' endpoint."""
+
     start_time: datetime
     end_time: datetime
     therapist_id: uuid.UUID

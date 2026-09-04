@@ -1,4 +1,5 @@
 import uuid
+
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.therapist import Therapist, TherapistAvailability
@@ -32,10 +33,12 @@ def get_therapist(db: Session, therapist_id: uuid.UUID) -> Therapist | None:
     )
 
 
-def list_therapists(db: Session, active_only: bool = False, skip: int = 0, limit: int = 100) -> list[Therapist]:
+def list_therapists(
+    db: Session, active_only: bool = False, skip: int = 0, limit: int = 100
+) -> list[Therapist]:
     query = db.query(Therapist).options(joinedload(Therapist.availability_slots))
     if active_only:
-        query = query.filter(Therapist.is_active == True)  # noqa: E712
+        query = query.filter(Therapist.is_active)
     return query.order_by(Therapist.full_name).offset(skip).limit(limit).all()
 
 

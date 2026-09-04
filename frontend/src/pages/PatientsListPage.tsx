@@ -51,7 +51,6 @@ export function PatientsListPage() {
             <Card
               key={p.id}
               className="cursor-pointer transition-shadow hover:shadow-popover"
-              // eslint-disable-next-line react/no-unknown-property
             >
               <button className="w-full text-left" onClick={() => navigate(`/patients/${p.id}`)}>
                 <div className="mb-2 flex items-start justify-between">

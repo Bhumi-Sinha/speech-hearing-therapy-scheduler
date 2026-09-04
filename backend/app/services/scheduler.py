@@ -18,22 +18,22 @@ Rules enforced:
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, time
-from typing import List, Optional
+from datetime import datetime, time, timedelta
 from uuid import UUID
 
-from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
+from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.models.appointment import Appointment, AppointmentStatus
-from app.models.therapist import Therapist, TherapistAvailability
-from app.models.room import Room
 from app.models.patient import Patient
+from app.models.room import Room
+from app.models.therapist import Therapist, TherapistAvailability
 
 
 class SchedulingError(Exception):
     """Raised whenever a proposed appointment violates a scheduling rule."""
+
     def __init__(self, message: str, code: str = "scheduling_error"):
         self.message = message
         self.code = code
@@ -47,7 +47,7 @@ class ProposedAppointment:
     room_id: UUID
     start_time: datetime
     end_time: datetime
-    exclude_appointment_id: Optional[UUID] = None  # set when rescheduling an existing one
+    exclude_appointment_id: UUID | None = None  # set when rescheduling an existing one
 
 
 def _overlaps_filter(start: datetime, end: datetime):
@@ -91,7 +91,9 @@ def validate_basic_rules(proposal: ProposedAppointment) -> None:
         raise SchedulingError("Appointments cannot span across midnight/multiple days.", code="spans_days")
 
 
-def validate_entities_exist_and_active(db: Session, proposal: ProposedAppointment) -> tuple[Patient, Therapist, Room]:
+def validate_entities_exist_and_active(
+    db: Session, proposal: ProposedAppointment
+) -> tuple[Patient, Therapist, Room]:
     patient = db.query(Patient).filter(Patient.id == proposal.patient_id).first()
     if not patient:
         raise SchedulingError("Patient not found.", code="patient_not_found")
@@ -115,10 +117,8 @@ def validate_therapist_availability(db: Session, proposal: ProposedAppointment, 
     """If the therapist has defined weekly availability, the appointment must
     fit fully inside one of those windows. If no availability rows exist for
     that therapist at all, we don't block (means "not configured yet")."""
-    slots: List[TherapistAvailability] = (
-        db.query(TherapistAvailability)
-        .filter(TherapistAvailability.therapist_id == therapist.id)
-        .all()
+    slots: list[TherapistAvailability] = (
+        db.query(TherapistAvailability).filter(TherapistAvailability.therapist_id == therapist.id).all()
     )
     if not slots:
         return  # no availability configured -> fall back to clinic-wide hours only
@@ -158,7 +158,9 @@ def check_conflicts(db: Session, proposal: ProposedAppointment) -> None:
     conflict = query.first()
     if conflict:
         if conflict.therapist_id == proposal.therapist_id:
-            raise SchedulingError("Therapist already has an appointment at that time.", code="therapist_conflict")
+            raise SchedulingError(
+                "Therapist already has an appointment at that time.", code="therapist_conflict"
+            )
         if conflict.room_id == proposal.room_id:
             raise SchedulingError("Room is already booked at that time.", code="room_conflict")
         raise SchedulingError("Patient already has an appointment at that time.", code="patient_conflict")
@@ -177,21 +179,21 @@ def find_available_slots(
     db: Session,
     date: datetime,
     duration_minutes: int,
-    therapist_id: Optional[UUID] = None,
-    room_id: Optional[UUID] = None,
-) -> List[dict]:
+    therapist_id: UUID | None = None,
+    room_id: UUID | None = None,
+) -> list[dict]:
     """
     Scans clinic hours on the given date in SLOT_GRANULARITY_MINUTES increments
     and returns every (therapist, room) combination that is free for the
     requested duration. Used by the "find a slot" screen in the frontend so
     the admin doesn't have to guess-and-check.
     """
-    therapists = db.query(Therapist).filter(Therapist.is_active == True)  # noqa: E712
+    therapists = db.query(Therapist).filter(Therapist.is_active)
     if therapist_id:
         therapists = therapists.filter(Therapist.id == therapist_id)
     therapists = therapists.all()
 
-    rooms = db.query(Room).filter(Room.is_active == True)  # noqa: E712
+    rooms = db.query(Room).filter(Room.is_active)
     if room_id:
         rooms = rooms.filter(Room.id == room_id)
     rooms = rooms.all()
@@ -241,8 +243,7 @@ def find_available_slots(
 
             for room in rooms:
                 room_busy = any(
-                    a.room_id == room.id and a.start_time < slot_end and a.end_time > cursor
-                    for a in existing
+                    a.room_id == room.id and a.start_time < slot_end and a.end_time > cursor for a in existing
                 )
                 if room_busy:
                     continue

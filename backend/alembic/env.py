@@ -1,15 +1,16 @@
-import sys
 import os
+import sys
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
+
 from alembic import context
 
 sys.path.append(os.getcwd())
 
+from app import models  # noqa: F401
 from app.config import settings
 from app.database import Base
-from app.models import *  # noqa: F401,F403  -- import all models so autogenerate sees them
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

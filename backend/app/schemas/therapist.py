@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime, time
-from typing import Optional, List
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -32,21 +31,21 @@ class AvailabilitySlotOut(AvailabilitySlotBase):
 
 class TherapistBase(BaseModel):
     full_name: str = Field(min_length=1, max_length=150)
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
     specialization: Specialization = Specialization.SPEECH_THERAPY
 
 
 class TherapistCreate(TherapistBase):
-    availability_slots: List[AvailabilitySlotCreate] = []
+    availability_slots: list[AvailabilitySlotCreate] = []
 
 
 class TherapistUpdate(BaseModel):
-    full_name: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    specialization: Optional[Specialization] = None
-    is_active: Optional[bool] = None
+    full_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    specialization: Specialization | None = None
+    is_active: bool | None = None
 
 
 class TherapistOut(TherapistBase):
@@ -55,4 +54,4 @@ class TherapistOut(TherapistBase):
     id: uuid.UUID
     is_active: bool
     created_at: datetime
-    availability_slots: List[AvailabilitySlotOut] = []
+    availability_slots: list[AvailabilitySlotOut] = []

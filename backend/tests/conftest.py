@@ -1,14 +1,17 @@
-import pytest
 from datetime import time
+
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base
+from app.models.appointment import (
+    Appointment,  # noqa: F401 -- ensure mapped before create_all
+)
 from app.models.patient import Patient
-from app.models.therapist import Therapist, TherapistAvailability
 from app.models.room import Room
-from app.models.appointment import Appointment  # noqa: F401 -- ensure mapped before create_all
+from app.models.therapist import Therapist, TherapistAvailability
 
 
 @pytest.fixture()
@@ -38,7 +41,7 @@ def sample_data(db_session):
     db_session.flush()
 
     # Therapist available Monday-Friday 09:00-17:00
-    for weekday in range(0, 5):
+    for weekday in range(5):
         db_session.add(
             TherapistAvailability(
                 therapist_id=therapist.id, weekday=weekday, start_time=time(9, 0), end_time=time(17, 0)

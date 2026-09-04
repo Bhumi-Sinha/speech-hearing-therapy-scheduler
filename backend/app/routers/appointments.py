@@ -1,22 +1,29 @@
 import uuid
 from datetime import datetime
-from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.core.deps import get_current_user
-from app.schemas.appointment import (
-    AppointmentCreate, AppointmentUpdate, AppointmentOut, AvailableSlotOut
-)
-from app.models.appointment import AppointmentStatus
 from app.crud import appointment as crud
+from app.database import get_db
+from app.models.appointment import AppointmentStatus
+from app.schemas.appointment import (
+    AppointmentCreate,
+    AppointmentOut,
+    AppointmentUpdate,
+    AvailableSlotOut,
+)
 from app.services.scheduler import (
-    ProposedAppointment, SchedulingError, validate_and_prepare, find_available_slots,
+    ProposedAppointment,
+    SchedulingError,
+    find_available_slots,
+    validate_and_prepare,
 )
 
-router = APIRouter(prefix="/api/appointments", tags=["appointments"], dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix="/api/appointments", tags=["appointments"], dependencies=[Depends(get_current_user)]
+)
 
 
 @router.post("", response_model=AppointmentOut, status_code=201)
@@ -31,7 +38,7 @@ def create_appointment(data: AppointmentCreate, db: Session = Depends(get_db)):
     try:
         validate_and_prepare(db, proposal)
     except SchedulingError as e:
-        raise HTTPException(status_code=409, detail={"code": e.code, "message": e.message})
+        raise HTTPException(status_code=409, detail={"code": e.code, "message": e.message}) from e
 
     appt = crud.create_appointment(
         db,
@@ -45,28 +52,33 @@ def create_appointment(data: AppointmentCreate, db: Session = Depends(get_db)):
     return crud.get_appointment(db, appt.id)
 
 
-@router.get("", response_model=List[AppointmentOut])
+@router.get("", response_model=list[AppointmentOut])
 def list_appointments(
-    date_from: Optional[datetime] = None,
-    date_to: Optional[datetime] = None,
-    therapist_id: Optional[uuid.UUID] = None,
-    room_id: Optional[uuid.UUID] = None,
-    patient_id: Optional[uuid.UUID] = None,
-    status: Optional[AppointmentStatus] = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    therapist_id: uuid.UUID | None = None,
+    room_id: uuid.UUID | None = None,
+    patient_id: uuid.UUID | None = None,
+    status: AppointmentStatus | None = None,
     db: Session = Depends(get_db),
 ):
     return crud.list_appointments(
-        db, date_from=date_from, date_to=date_to, therapist_id=therapist_id,
-        room_id=room_id, patient_id=patient_id, status=status,
+        db,
+        date_from=date_from,
+        date_to=date_to,
+        therapist_id=therapist_id,
+        room_id=room_id,
+        patient_id=patient_id,
+        status=status,
     )
 
 
-@router.get("/available-slots", response_model=List[AvailableSlotOut])
+@router.get("/available-slots", response_model=list[AvailableSlotOut])
 def available_slots(
     date: datetime = Query(..., description="Date to search, e.g. 2026-08-20"),
     duration_minutes: int = Query(default=45, ge=15, le=180),
-    therapist_id: Optional[uuid.UUID] = None,
-    room_id: Optional[uuid.UUID] = None,
+    therapist_id: uuid.UUID | None = None,
+    room_id: uuid.UUID | None = None,
     db: Session = Depends(get_db),
 ):
     return find_available_slots(
@@ -103,7 +115,7 @@ def update_appointment(appointment_id: uuid.UUID, data: AppointmentUpdate, db: S
         try:
             validate_and_prepare(db, proposal)
         except SchedulingError as e:
-            raise HTTPException(status_code=409, detail={"code": e.code, "message": e.message})
+            raise HTTPException(status_code=409, detail={"code": e.code, "message": e.message}) from e
 
     for field, value in changed.items():
         setattr(appt, field, value)

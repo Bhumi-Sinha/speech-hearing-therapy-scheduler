@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload
 
@@ -14,7 +13,7 @@ def create_appointment(
     room_id: uuid.UUID,
     start_time: datetime,
     end_time: datetime,
-    notes: Optional[str],
+    notes: str | None,
 ) -> Appointment:
     appt = Appointment(
         patient_id=patient_id,
@@ -34,7 +33,9 @@ def create_appointment(
 def get_appointment(db: Session, appointment_id: uuid.UUID) -> Appointment | None:
     return (
         db.query(Appointment)
-        .options(joinedload(Appointment.patient), joinedload(Appointment.therapist), joinedload(Appointment.room))
+        .options(
+            joinedload(Appointment.patient), joinedload(Appointment.therapist), joinedload(Appointment.room)
+        )
         .filter(Appointment.id == appointment_id)
         .first()
     )
@@ -42,12 +43,12 @@ def get_appointment(db: Session, appointment_id: uuid.UUID) -> Appointment | Non
 
 def list_appointments(
     db: Session,
-    date_from: Optional[datetime] = None,
-    date_to: Optional[datetime] = None,
-    therapist_id: Optional[uuid.UUID] = None,
-    room_id: Optional[uuid.UUID] = None,
-    patient_id: Optional[uuid.UUID] = None,
-    status: Optional[AppointmentStatus] = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    therapist_id: uuid.UUID | None = None,
+    room_id: uuid.UUID | None = None,
+    patient_id: uuid.UUID | None = None,
+    status: AppointmentStatus | None = None,
 ) -> list[Appointment]:
     query = db.query(Appointment).options(
         joinedload(Appointment.patient), joinedload(Appointment.therapist), joinedload(Appointment.room)

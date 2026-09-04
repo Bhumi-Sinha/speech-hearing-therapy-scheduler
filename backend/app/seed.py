@@ -4,13 +4,14 @@ therapists so the app is immediately usable after `docker compose up`.
 
 Run with:  docker compose exec backend python -m app.seed
 """
+
 from datetime import time
 
-from app.database import SessionLocal
-from app.models.user import User, UserRole
-from app.models.room import Room
-from app.models.therapist import Therapist, TherapistAvailability, Specialization
 from app.core.security import hash_password
+from app.database import SessionLocal
+from app.models.room import Room
+from app.models.therapist import Specialization, Therapist, TherapistAvailability
+from app.models.user import User, UserRole
 
 
 def run():
@@ -45,13 +46,17 @@ def run():
             db.add_all([t1, t2])
             db.flush()
 
-            for weekday in range(0, 5):  # Mon-Fri
-                db.add(TherapistAvailability(
-                    therapist_id=t1.id, weekday=weekday, start_time=time(9, 0), end_time=time(17, 0)
-                ))
-                db.add(TherapistAvailability(
-                    therapist_id=t2.id, weekday=weekday, start_time=time(10, 0), end_time=time(18, 0)
-                ))
+            for weekday in range(5):  # Mon-Fri
+                db.add(
+                    TherapistAvailability(
+                        therapist_id=t1.id, weekday=weekday, start_time=time(9, 0), end_time=time(17, 0)
+                    )
+                )
+                db.add(
+                    TherapistAvailability(
+                        therapist_id=t2.id, weekday=weekday, start_time=time(10, 0), end_time=time(18, 0)
+                    )
+                )
             db.commit()
             print("Created sample therapists with availability")
 

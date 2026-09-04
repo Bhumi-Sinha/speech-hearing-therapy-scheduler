@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "*"
 
     # --- Scheduling rules ---
-    CLINIC_OPEN_HOUR: int = 9        # 9 AM
-    CLINIC_CLOSE_HOUR: int = 18      # 6 PM
+    CLINIC_OPEN_HOUR: int = 9  # 9 AM
+    CLINIC_CLOSE_HOUR: int = 18  # 6 PM
     DEFAULT_SESSION_MINUTES: int = 45
     MIN_SESSION_MINUTES: int = 15
     MAX_SESSION_MINUTES: int = 180

@@ -1,4 +1,5 @@
 import uuid
+
 from sqlalchemy.orm import Session
 
 from app.models.room import Room
@@ -20,7 +21,7 @@ def get_room(db: Session, room_id: uuid.UUID) -> Room | None:
 def list_rooms(db: Session, active_only: bool = False) -> list[Room]:
     query = db.query(Room)
     if active_only:
-        query = query.filter(Room.is_active == True)  # noqa: E712
+        query = query.filter(Room.is_active)
     return query.order_by(Room.name).all()
 
 

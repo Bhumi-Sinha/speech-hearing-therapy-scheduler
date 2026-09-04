@@ -1,13 +1,12 @@
 import uuid
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.core.deps import get_current_user
-from app.schemas.room import RoomCreate, RoomUpdate, RoomOut
 from app.crud import room as crud
+from app.database import get_db
+from app.schemas.room import RoomCreate, RoomOut, RoomUpdate
 
 router = APIRouter(prefix="/api/rooms", tags=["rooms"], dependencies=[Depends(get_current_user)])
 
@@ -17,7 +16,7 @@ def create_room(data: RoomCreate, db: Session = Depends(get_db)):
     return crud.create_room(db, data)
 
 
-@router.get("", response_model=List[RoomOut])
+@router.get("", response_model=list[RoomOut])
 def list_rooms(active_only: bool = Query(default=False), db: Session = Depends(get_db)):
     return crud.list_rooms(db, active_only=active_only)
 

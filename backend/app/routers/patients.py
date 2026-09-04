@@ -1,13 +1,12 @@
 import uuid
-from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.core.deps import get_current_user
-from app.schemas.patient import PatientCreate, PatientUpdate, PatientOut
 from app.crud import patient as crud
+from app.database import get_db
+from app.schemas.patient import PatientCreate, PatientOut, PatientUpdate
 
 router = APIRouter(prefix="/api/patients", tags=["patients"], dependencies=[Depends(get_current_user)])
 
@@ -17,9 +16,9 @@ def create_patient(data: PatientCreate, db: Session = Depends(get_db)):
     return crud.create_patient(db, data)
 
 
-@router.get("", response_model=List[PatientOut])
+@router.get("", response_model=list[PatientOut])
 def list_patients(
-    search: Optional[str] = Query(default=None),
+    search: str | None = Query(default=None),
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),

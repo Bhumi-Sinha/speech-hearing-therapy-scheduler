@@ -1,13 +1,12 @@
 import uuid
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.core.deps import get_current_user
-from app.schemas.therapist import TherapistCreate, TherapistUpdate, TherapistOut
 from app.crud import therapist as crud
+from app.database import get_db
+from app.schemas.therapist import TherapistCreate, TherapistOut, TherapistUpdate
 
 router = APIRouter(prefix="/api/therapists", tags=["therapists"], dependencies=[Depends(get_current_user)])
 
@@ -17,7 +16,7 @@ def create_therapist(data: TherapistCreate, db: Session = Depends(get_db)):
     return crud.create_therapist(db, data)
 
 
-@router.get("", response_model=List[TherapistOut])
+@router.get("", response_model=list[TherapistOut])
 def list_therapists(active_only: bool = Query(default=False), db: Session = Depends(get_db)):
     return crud.list_therapists(db, active_only=active_only)
 

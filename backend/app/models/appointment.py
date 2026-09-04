@@ -2,11 +2,11 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime, Enum, ForeignKey, Text
-from app.db_types import GUID as UUID
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.db_types import GUID as UUID
 
 
 class AppointmentStatus(str, enum.Enum):
@@ -28,7 +28,11 @@ class Appointment(Base):
     start_time = Column(DateTime, nullable=False, index=True)
     end_time = Column(DateTime, nullable=False, index=True)
 
-    status = Column(Enum(AppointmentStatus, values_callable=lambda x: [e.value for e in x]), nullable=False, default=AppointmentStatus.SCHEDULED)
+    status = Column(
+        Enum(AppointmentStatus, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=AppointmentStatus.SCHEDULED,
+    )
     notes = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

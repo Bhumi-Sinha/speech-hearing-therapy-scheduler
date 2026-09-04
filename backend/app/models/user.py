@@ -2,10 +2,10 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime, Enum, Boolean
-from app.db_types import GUID as UUID
+from sqlalchemy import Boolean, Column, DateTime, Enum, String
 
 from app.database import Base
+from app.db_types import GUID as UUID
 
 
 class UserRole(str, enum.Enum):
@@ -26,6 +26,8 @@ class User(Base):
     full_name = Column(String(150), nullable=False)
     email = Column(String(150), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
-    role = Column(Enum(UserRole, values_callable=lambda x: [e.value for e in x]), nullable=False, default=UserRole.ADMIN)
+    role = Column(
+        Enum(UserRole, values_callable=lambda x: [e.value for e in x]), nullable=False, default=UserRole.ADMIN
+    )
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

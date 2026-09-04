@@ -1,13 +1,12 @@
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class RoomBase(BaseModel):
     name: str = Field(min_length=1, max_length=100)
-    equipment: Optional[str] = None
+    equipment: str | None = None
 
 
 class RoomCreate(RoomBase):
@@ -15,9 +14,9 @@ class RoomCreate(RoomBase):
 
 
 class RoomUpdate(BaseModel):
-    name: Optional[str] = None
-    equipment: Optional[str] = None
-    is_active: Optional[bool] = None
+    name: str | None = None
+    equipment: str | None = None
+    is_active: bool | None = None
 
 
 class RoomOut(RoomBase):

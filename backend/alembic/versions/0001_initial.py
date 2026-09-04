@@ -5,9 +5,11 @@ Revises:
 Create Date: 2026-08-16
 
 """
-from alembic import op
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 revision = "0001"
 down_revision = None
@@ -63,7 +65,9 @@ def upgrade() -> None:
     op.create_table(
         "therapist_availability",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("therapist_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("therapists.id"), nullable=False),
+        sa.Column(
+            "therapist_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("therapists.id"), nullable=False
+        ),
         sa.Column("weekday", sa.Integer(), nullable=False),
         sa.Column("start_time", sa.Time(), nullable=False),
         sa.Column("end_time", sa.Time(), nullable=False),
@@ -82,7 +86,9 @@ def upgrade() -> None:
         "appointments",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("patient_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("patients.id"), nullable=False),
-        sa.Column("therapist_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("therapists.id"), nullable=False),
+        sa.Column(
+            "therapist_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("therapists.id"), nullable=False
+        ),
         sa.Column("room_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("rooms.id"), nullable=False),
         sa.Column("start_time", sa.DateTime(), nullable=False),
         sa.Column("end_time", sa.DateTime(), nullable=False),

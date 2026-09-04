@@ -4,17 +4,18 @@ with the DB dependency overridden to an in-memory SQLite database.
 This proves the whole stack (routers -> crud -> scheduler -> models) works
 together, not just the scheduler in isolation.
 """
+
 import os
 
 os.environ.setdefault("POSTGRES_HOST", "localhost")
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from fastapi.testclient import TestClient
 
-import app.models  # noqa: F401 -- import first to register all models before app.main binds the name "app"
+import app.models
 from app.database import Base, get_db
 from app.main import app
 
@@ -41,9 +42,14 @@ def client():
 
 
 def auth_headers(client):
-    client.post("/api/auth/register", json={
-        "full_name": "Admin", "email": "admin@test.com", "password": "Passw0rd!123",
-    })
+    client.post(
+        "/api/auth/register",
+        json={
+            "full_name": "Admin",
+            "email": "admin@test.com",
+            "password": "Passw0rd!123",
+        },
+    )
     resp = client.post("/api/auth/login", json={"email": "admin@test.com", "password": "Passw0rd!123"})
     token = resp.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -56,43 +62,61 @@ def test_full_scheduling_flow(client):
     room = client.post("/api/rooms", json={"name": "Room 1"}, headers=headers).json()
 
     # Create a therapist with Monday availability
-    therapist = client.post("/api/therapists", json={
-        "full_name": "Dr. Flow",
-        "specialization": "speech_therapy",
-        "availability_slots": [{"weekday": 0, "start_time": "09:00:00", "end_time": "17:00:00"}],
-    }, headers=headers).json()
+    therapist = client.post(
+        "/api/therapists",
+        json={
+            "full_name": "Dr. Flow",
+            "specialization": "speech_therapy",
+            "availability_slots": [{"weekday": 0, "start_time": "09:00:00", "end_time": "17:00:00"}],
+        },
+        headers=headers,
+    ).json()
 
     # Create a patient
-    patient = client.post("/api/patients", json={
-        "full_name": "Test Patient", "condition_type": "speech",
-    }, headers=headers).json()
+    patient = client.post(
+        "/api/patients",
+        json={
+            "full_name": "Test Patient",
+            "condition_type": "speech",
+        },
+        headers=headers,
+    ).json()
 
     from datetime import datetime, timedelta
+
     today = datetime.utcnow()
     days_ahead = (0 - today.weekday()) % 7 or 7
     monday_10am = (today + timedelta(days=days_ahead)).replace(hour=10, minute=0, second=0, microsecond=0)
 
     # Book an appointment
-    resp = client.post("/api/appointments", json={
-        "patient_id": patient["id"],
-        "therapist_id": therapist["id"],
-        "room_id": room["id"],
-        "start_time": monday_10am.isoformat(),
-        "end_time": (monday_10am + timedelta(minutes=45)).isoformat(),
-    }, headers=headers)
+    resp = client.post(
+        "/api/appointments",
+        json={
+            "patient_id": patient["id"],
+            "therapist_id": therapist["id"],
+            "room_id": room["id"],
+            "start_time": monday_10am.isoformat(),
+            "end_time": (monday_10am + timedelta(minutes=45)).isoformat(),
+        },
+        headers=headers,
+    )
     assert resp.status_code == 201, resp.text
     appt = resp.json()
     assert appt["patient"]["full_name"] == "Test Patient"
     assert appt["status"] == "scheduled"
 
     # Try to double-book the same therapist -> should get 409 conflict
-    resp2 = client.post("/api/appointments", json={
-        "patient_id": patient["id"],
-        "therapist_id": therapist["id"],
-        "room_id": room["id"],
-        "start_time": monday_10am.isoformat(),
-        "end_time": (monday_10am + timedelta(minutes=45)).isoformat(),
-    }, headers=headers)
+    resp2 = client.post(
+        "/api/appointments",
+        json={
+            "patient_id": patient["id"],
+            "therapist_id": therapist["id"],
+            "room_id": room["id"],
+            "start_time": monday_10am.isoformat(),
+            "end_time": (monday_10am + timedelta(minutes=45)).isoformat(),
+        },
+        headers=headers,
+    )
     assert resp2.status_code == 409
     assert resp2.json()["detail"]["code"] == "therapist_conflict"
 
@@ -106,13 +130,17 @@ def test_full_scheduling_flow(client):
     cancel = client.patch(f"/api/appointments/{appt['id']}", json={"status": "cancelled"}, headers=headers)
     assert cancel.status_code == 200
 
-    resp3 = client.post("/api/appointments", json={
-        "patient_id": patient["id"],
-        "therapist_id": therapist["id"],
-        "room_id": room["id"],
-        "start_time": monday_10am.isoformat(),
-        "end_time": (monday_10am + timedelta(minutes=45)).isoformat(),
-    }, headers=headers)
+    resp3 = client.post(
+        "/api/appointments",
+        json={
+            "patient_id": patient["id"],
+            "therapist_id": therapist["id"],
+            "room_id": room["id"],
+            "start_time": monday_10am.isoformat(),
+            "end_time": (monday_10am + timedelta(minutes=45)).isoformat(),
+        },
+        headers=headers,
+    )
     assert resp3.status_code == 201
 
 

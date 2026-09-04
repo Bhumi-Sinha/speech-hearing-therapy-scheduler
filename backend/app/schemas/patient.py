@@ -1,6 +1,5 @@
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -9,11 +8,11 @@ from app.models.patient import ConditionType
 
 class PatientBase(BaseModel):
     full_name: str = Field(min_length=1, max_length=150)
-    age: Optional[int] = Field(default=None, ge=0, le=120)
-    phone: Optional[str] = Field(default=None, max_length=20)
-    email: Optional[str] = Field(default=None, max_length=150)
+    age: int | None = Field(default=None, ge=0, le=120)
+    phone: str | None = Field(default=None, max_length=20)
+    email: str | None = Field(default=None, max_length=150)
     condition_type: ConditionType = ConditionType.SPEECH
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class PatientCreate(PatientBase):
@@ -21,13 +20,13 @@ class PatientCreate(PatientBase):
 
 
 class PatientUpdate(BaseModel):
-    full_name: Optional[str] = None
-    age: Optional[int] = None
-    phone: Optional[str] = None
-    email: Optional[str] = None
-    condition_type: Optional[ConditionType] = None
-    notes: Optional[str] = None
-    is_active: Optional[str] = None
+    full_name: str | None = None
+    age: int | None = None
+    phone: str | None = None
+    email: str | None = None
+    condition_type: ConditionType | None = None
+    notes: str | None = None
+    is_active: str | None = None
 
 
 class PatientOut(PatientBase):

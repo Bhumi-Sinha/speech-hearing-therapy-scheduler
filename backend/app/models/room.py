@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime, Boolean
-from app.db_types import GUID as UUID
+from sqlalchemy import Boolean, Column, DateTime, String
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.db_types import GUID as UUID
 
 
 class Room(Base):

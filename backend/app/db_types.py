@@ -3,10 +3,11 @@ Portable UUID type: uses PostgreSQL's native UUID type in production, and
 falls back to a CHAR(36) representation on SQLite so the exact same models
 can be exercised in fast in-memory unit tests (see tests/conftest.py).
 """
+
 import uuid
 
-from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.types import CHAR, TypeDecorator
 
 
 class GUID(TypeDecorator):

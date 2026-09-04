@@ -2,10 +2,13 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from app.services.scheduler import (
-    ProposedAppointment, SchedulingError, validate_and_prepare, find_available_slots,
-)
 from app.crud.appointment import create_appointment
+from app.services.scheduler import (
+    ProposedAppointment,
+    SchedulingError,
+    find_available_slots,
+    validate_and_prepare,
+)
 
 
 def next_monday_at(hour: int, minute: int = 0) -> datetime:
@@ -15,9 +18,7 @@ def next_monday_at(hour: int, minute: int = 0) -> datetime:
     today = datetime.utcnow()
     days_ahead = (0 - today.weekday()) % 7
     days_ahead = days_ahead or 7  # always a *future* Monday, never today
-    monday = (today + timedelta(days=days_ahead)).replace(
-        hour=hour, minute=minute, second=0, microsecond=0
-    )
+    monday = (today + timedelta(days=days_ahead)).replace(hour=hour, minute=minute, second=0, microsecond=0)
     return monday
 
 
@@ -157,18 +158,24 @@ def test_rejects_past_datetime(db_session, sample_data):
 
 def test_rejects_patient_double_booked_with_different_therapist(db_session, sample_data):
     """Same patient can't be in two places at once, even with a different therapist/room."""
-    from app.models.therapist import Therapist, TherapistAvailability
-    from app.models.room import Room
     from datetime import time as dtime
+
+    from app.models.room import Room
+    from app.models.therapist import Therapist, TherapistAvailability
 
     other_therapist = Therapist(full_name="Dr. Second", specialization="audiology")
     other_room = Room(name="Room B")
     db_session.add_all([other_therapist, other_room])
     db_session.flush()
-    for weekday in range(0, 5):
-        db_session.add(TherapistAvailability(
-            therapist_id=other_therapist.id, weekday=weekday, start_time=dtime(9, 0), end_time=dtime(17, 0)
-        ))
+    for weekday in range(5):
+        db_session.add(
+            TherapistAvailability(
+                therapist_id=other_therapist.id,
+                weekday=weekday,
+                start_time=dtime(9, 0),
+                end_time=dtime(17, 0),
+            )
+        )
     db_session.commit()
 
     start = next_monday_at(10)
@@ -207,7 +214,6 @@ def test_find_available_slots_excludes_booked_time(db_session, sample_data):
     )
     slots = find_available_slots(db_session, date=start, duration_minutes=45)
     booked = [
-        s for s in slots
-        if s["therapist_id"] == sample_data["therapist"].id and s["start_time"] == start
+        s for s in slots if s["therapist_id"] == sample_data["therapist"].id and s["start_time"] == start
     ]
     assert booked == []  # that exact slot should not be offered as available

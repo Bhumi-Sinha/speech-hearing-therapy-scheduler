@@ -1,13 +1,18 @@
-from app.models.user import User, UserRole
-from app.models.patient import Patient, ConditionType
-from app.models.therapist import Therapist, TherapistAvailability, Specialization
-from app.models.room import Room
 from app.models.appointment import Appointment, AppointmentStatus
+from app.models.patient import ConditionType, Patient
+from app.models.room import Room
+from app.models.therapist import Specialization, Therapist, TherapistAvailability
+from app.models.user import User, UserRole
 
 __all__ = [
-    "User", "UserRole",
-    "Patient", "ConditionType",
-    "Therapist", "TherapistAvailability", "Specialization",
+    "Appointment",
+    "AppointmentStatus",
+    "ConditionType",
+    "Patient",
     "Room",
-    "Appointment", "AppointmentStatus",
+    "Specialization",
+    "Therapist",
+    "TherapistAvailability",
+    "User",
+    "UserRole",
 ]
