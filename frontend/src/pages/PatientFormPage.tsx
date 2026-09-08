@@ -15,7 +15,17 @@ const schema = z.object({
   full_name: z.string().min(1, "Name is required").max(150),
   age: z.union([z.coerce.number().min(0).max(120), z.literal("")]).optional(),
   phone: z.string().max(20).optional(),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  email: z
+  .string()
+  .trim()
+  .refine(
+    (value) =>
+      value === "" ||
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+    {
+      message: "Invalid email",
+    }
+  ),
   condition_type: z.enum(["speech", "hearing", "both"]),
   notes: z.string().optional(),
 });
@@ -105,7 +115,7 @@ export function PatientFormPage() {
 
       <Card>
         {apiError ? <ErrorBanner message={apiError} /> : null}
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form noValidate onSubmit={handleSubmit(onSubmit)}>
           <TextField label="Full name" {...register("full_name")} error={errors.full_name?.message} />
           <div className="grid grid-cols-2 gap-4">
             <TextField label="Age" type="number" {...register("age")} error={errors.age?.message as string} />

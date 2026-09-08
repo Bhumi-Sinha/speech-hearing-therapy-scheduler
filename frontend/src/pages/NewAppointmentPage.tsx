@@ -42,7 +42,7 @@ export function NewAppointmentPage() {
     queryKey: ["available-slots", date, duration, therapistFilter, roomFilter],
     queryFn: () =>
       appointmentsApi.findAvailableSlots({
-        date: new Date(date).toISOString(),
+        date: date,
         duration_minutes: duration,
         therapist_id: therapistFilter || undefined,
         room_id: roomFilter || undefined,
@@ -53,7 +53,12 @@ export function NewAppointmentPage() {
   const handleSearch = async () => {
     setSelectedSlot(null);
     setHasSearched(true);
-    await refetch();
+    const result = await refetch();
+
+    console.log("SEARCH DATE:", date);
+    console.log("SEARCH DURATION:", duration);
+    console.log("AVAILABLE SLOTS RESULT:", result.data);
+    console.log("AVAILABLE SLOTS COUNT:", result.data?.length ?? 0);
   };
 
   const bookMutation = useMutation({
@@ -183,6 +188,7 @@ export function NewAppointmentPage() {
                       return (
                         <button
                           key={i}
+                          data-testid="available-slot"
                           onClick={() => setSelectedSlot(opt)}
                           className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs transition-colors ${
                             isSelected
@@ -222,7 +228,12 @@ export function NewAppointmentPage() {
           </p>
           <TextAreaField label="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
           {bookingError ? <ErrorBanner message={bookingError} /> : null}
-          <Button onClick={handleBook} loading={bookMutation.isPending} className="w-full">
+          <Button 
+          data-testid="confirm-booking"
+          onClick={handleBook}
+          loading={bookMutation.isPending}
+          className="w-full"
+          >
             Confirm booking
           </Button>
         </Card>

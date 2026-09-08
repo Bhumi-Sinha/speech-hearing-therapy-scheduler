@@ -31,3 +31,10 @@ Thumbs.db
 
 # --- Docker ---
 pgdata/
+
+# --- Playwright ---
+frontend/test-results/
+frontend/playwright-report/
+test-results/
+playwright-report/
+blob-report/

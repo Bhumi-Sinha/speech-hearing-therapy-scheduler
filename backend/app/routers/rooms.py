@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
@@ -13,7 +14,14 @@ router = APIRouter(prefix="/api/rooms", tags=["rooms"], dependencies=[Depends(ge
 
 @router.post("", response_model=RoomOut, status_code=201)
 def create_room(data: RoomCreate, db: Session = Depends(get_db)):
-    return crud.create_room(db, data)
+    try:
+        return crud.create_room(db, data)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="A room with this name already exists.",
+        )
 
 
 @router.get("", response_model=list[RoomOut])
