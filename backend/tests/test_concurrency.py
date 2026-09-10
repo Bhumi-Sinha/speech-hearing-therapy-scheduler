@@ -29,6 +29,7 @@ Run explicitly with Docker's Postgres up:
 import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
 from datetime import datetime, time, timedelta
 
 import pytest
@@ -39,7 +40,6 @@ os.environ.setdefault("POSTGRES_HOST", "localhost")
 os.environ.setdefault("POSTGRES_DB", "scheduler_db_test")
 
 from app.config import settings  # noqa: E402
-from app.database import Base  # noqa: E402
 from app.models.appointment import Appointment, AppointmentStatus  # noqa: E402
 from app.models.patient import Patient  # noqa: E402
 from app.models.room import Room  # noqa: E402
@@ -65,10 +65,8 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture()
 def pg_session_factory():
     engine = create_engine(settings.DATABASE_URL)
-    Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine)
     yield factory
-    Base.metadata.drop_all(engine)
     engine.dispose()
 
 
@@ -90,8 +88,18 @@ def test_concurrent_bookings_for_identical_slot_do_not_double_book(pg_session_fa
     patient_id, therapist_id, room_id = patient.id, therapist.id, room.id
     setup_db.close()
 
-    start = (datetime.utcnow() + timedelta(days=1)).replace(minute=0, second=0, microsecond=0)
-    end = start + timedelta(minutes=30)
+    tomorrow = (datetime.now() + timedelta(days=1)).date()
+
+    start = datetime.combine(
+        tomorrow,
+        time(10, 0),
+    )
+
+    end = start + timedelta(minutes=45)
+
+    workers = 10
+    start_barrier = Barrier(workers)
+    insert_barrier = Barrier(workers)
 
     def attempt_booking(_):
         db = pg_session_factory()
@@ -104,7 +112,9 @@ def test_concurrent_bookings_for_identical_slot_do_not_double_book(pg_session_fa
                 end_time=end,
             )
             scheduler_service.validate_basic_rules(proposal)
+            start_barrier.wait(timeout=10)
             scheduler_service.check_conflicts(db, proposal)  # <-- the racy check
+            insert_barrier.wait(timeout=10)
             db.add(
                 Appointment(
                     patient_id=patient_id,
@@ -117,24 +127,45 @@ def test_concurrent_bookings_for_identical_slot_do_not_double_book(pg_session_fa
             )
             db.commit()
             return "booked"
-        except Exception:
+        except Exception as exc:
             db.rollback()
-            return "rejected"
+            return f"rejected: {type(exc).__name__}: {exc}"
         finally:
             db.close()
 
     # --- Act: fire 10 identical booking requests at (almost) the same instant ---
-    with ThreadPoolExecutor(max_workers=10) as pool:
-        results = list(pool.map(attempt_booking, range(10)))
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        results = list(pool.map(attempt_booking, range(workers)))
 
+    print("\nConcurrency results:")
+
+    for result in results:
+        print(result)
     # --- Assert: exactly one should have won ---
     booked = results.count("booked")
+    verify_db = pg_session_factory()
+
+    try:
+        appointment_count = (
+            verify_db.query(Appointment)
+            .filter(
+                Appointment.therapist_id == therapist_id,
+                Appointment.room_id == room_id,
+                Appointment.start_time == start,
+                Appointment.end_time == end,
+                Appointment.status == AppointmentStatus.SCHEDULED,
+            )
+            .count()
+        )
+
+    finally:
+        verify_db.close()
     assert booked == 1, (
-        f"Expected exactly 1 of 10 concurrent identical booking requests to "
-        f"succeed, but {booked} succeeded. The check-then-insert guard in "
-        f"services/scheduler.check_conflicts() has a race condition: wrap the "
-        f"check + insert in one transaction using SELECT ... FOR UPDATE on the "
-        f"therapist/room's existing rows, or add a Postgres EXCLUDE constraint "
-        f"on (therapist_id, tsrange(start_time, end_time)) so the database "
-        f"itself makes overlap impossible."
+        f"Expected exactly 1 of {workers} concurrent booking attempts "
+        f"to succeed, but {booked} succeeded. Results: {results}"
+    )
+
+    assert appointment_count == 1, (
+        f"Expected exactly one appointment in the database, "
+        f"but found {appointment_count}."
     )
