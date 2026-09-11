@@ -47,6 +47,16 @@ jobs:
         working-directory: backend
         run: ruff check .
 
+      - name: Run database migrations
+        working-directory: backend
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_USER: scheduler_user
+          POSTGRES_PASSWORD: scheduler_pass
+          POSTGRES_DB: scheduler_db_test
+          JWT_SECRET_KEY: ci_test_secret_key
+        run: alembic upgrade head
+
       - name: Run tests
         working-directory: backend
         env:

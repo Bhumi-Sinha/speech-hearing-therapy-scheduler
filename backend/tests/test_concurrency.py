@@ -29,8 +29,9 @@ Run explicitly with Docker's Postgres up:
 import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from threading import Barrier
 from datetime import datetime, time, timedelta
+from threading import Barrier
+
 
 import pytest
 from sqlalchemy import create_engine
