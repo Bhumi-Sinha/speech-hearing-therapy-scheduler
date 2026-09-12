@@ -29,9 +29,8 @@ Run explicitly with Docker's Postgres up:
 import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone
 from threading import Barrier
-
 
 import pytest
 from sqlalchemy import create_engine
@@ -89,7 +88,7 @@ def test_concurrent_bookings_for_identical_slot_do_not_double_book(pg_session_fa
     patient_id, therapist_id, room_id = patient.id, therapist.id, room.id
     setup_db.close()
 
-    tomorrow = (datetime.now() + timedelta(days=1)).date()
+    tomorrow = (datetime.now(timezone.utc) + timedelta(days=1)).date()
 
     start = datetime.combine(
         tomorrow,

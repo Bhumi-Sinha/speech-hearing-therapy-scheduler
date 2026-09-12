@@ -16,12 +16,12 @@ router = APIRouter(prefix="/api/rooms", tags=["rooms"], dependencies=[Depends(ge
 def create_room(data: RoomCreate, db: Session = Depends(get_db)):
     try:
         return crud.create_room(db, data)
-    except IntegrityError:
+    except IntegrityError as err:
         db.rollback()
         raise HTTPException(
             status_code=409,
             detail="A room with this name already exists.",
-        )
+        ) from err
 
 
 @router.get("", response_model=list[RoomOut])
